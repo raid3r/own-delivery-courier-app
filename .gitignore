@@ -1,0 +1,51 @@
+## Node
+node_modules/
+.pnp
+.pnp.js
+
+## Expo / React Native
+.expo/
+dist/
+web-build/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+## Native build
+android/app/build/
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/build/
+*.xcworkspace
+DerivedData/
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## Metro bundler cache
+.metro-health-check*
+
+## IDE
+.vscode/
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## Coverage
+coverage/
