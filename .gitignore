@@ -1,51 +1,26 @@
-## Node
+# Dependencies
 node_modules/
-.pnp
-.pnp.js
 
-## Expo / React Native
-.expo/
+# Build output
 dist/
-web-build/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
+dist-ssr/
 
-## Native build
-android/app/build/
-android/.gradle/
-android/local.properties
-ios/Pods/
-ios/build/
-*.xcworkspace
-DerivedData/
-
-## Environment
+# Environment — secrets never committed
 .env
-.env.local
 .env.*.local
+*.local
 
-## Metro bundler cache
-.metro-health-check*
+# TypeScript cache
+*.tsbuildinfo
 
-## IDE
-.vscode/
-.idea/
+# Vite cache
+.vite/
+.vite-temp/
 
-## OS
+# Test coverage
+coverage/
+lcov.info
+
+# OS
 .DS_Store
 Thumbs.db
-
-## Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-## Coverage
-coverage/
