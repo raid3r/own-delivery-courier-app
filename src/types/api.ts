@@ -1,3 +1,5 @@
+import type { ApiOrderStatus } from '@/constants/order-status-codes'
+
 // ─── Shared DTOs ─────────────────────────────────────────────────────────────
 
 export interface AddressDto {
@@ -25,8 +27,8 @@ export interface LocationDto {
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-/** 0=Pending, 1=Assigned, 2=PickedUp, 3=InTransit, 4=Delivered, 5=Cancelled, 6=Failed */
-export type OrderStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6
+/** API_ORDER_STATUS: Pending, Assigned, PickedUp, InTransit, Delivered, Cancelled, Failed */
+export type OrderStatus = ApiOrderStatus
 
 /** 0=Cash, 1=Card, 2=Online, 3=Invoice, 4=Other */
 export type PaymentMethod = 0 | 1 | 2 | 3 | 4

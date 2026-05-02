@@ -3,21 +3,24 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import AppLayout from '@/components/layout/AppLayout.vue'
-import AppButton from '@/components/ui/AppButton.vue'
+import PageLoadState from '@/components/ui/PageLoadState.vue'
 import ProfileHeader from '@/components/profile/ProfileHeader.vue'
 import SettingsGroup from '@/components/profile/SettingsGroup.vue'
 import type { SettingsItem } from '@/components/profile/SettingsGroup.vue'
 import { couriersApi } from '@/api/endpoints/couriers.api'
-import { ordersApi } from '@/api/endpoints/orders.api'
+import { API_ORDER_STATUS } from '@/constants/order-status-codes'
+import { useMyOrders } from '@/composables/useMyOrders'
 import { useAuthStore } from '@/stores/auth.store'
-import type { OrderResponse } from '@/types/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const {
+  orders,
+  loadMyOrders,
+} = useMyOrders()
 
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
-const orders = ref<OrderResponse[]>([])
 
 const profile = computed(() => authStore.profile)
 
@@ -31,8 +34,12 @@ const role = computed(() => (profile.value?.isActive ? 'Active Courier' : 'Couri
 
 const stats = computed(() => {
   const total = orders.value.length
-  const delivered = orders.value.filter((o) => o.status === 4).length
-  const inProgress = orders.value.filter((o) => o.status === 1 || o.status === 2 || o.status === 3).length
+  const delivered = orders.value.filter((o) => o.status === API_ORDER_STATUS.DELIVERED).length
+  const inProgress = orders.value.filter((o) => {
+    return o.status === API_ORDER_STATUS.ASSIGNED
+      || o.status === API_ORDER_STATUS.PICKED_UP
+      || o.status === API_ORDER_STATUS.IN_TRANSIT
+  }).length
 
   return [
     { label: 'Orders', value: total, icon: 'package_2' },
@@ -77,8 +84,10 @@ async function loadProfileData() {
   }
 
   try {
-    const { data } = await ordersApi.getMyOrders()
-    orders.value = data
+    await loadMyOrders({
+      errorMessage: 'Failed to load profile orders. Please try again.',
+      throwOnError: true,
+    })
   } catch {
     // Keep profile visible even if stats endpoint is temporarily unavailable.
     orders.value = []
@@ -115,28 +124,14 @@ onMounted(() => {
 <template>
   <AppLayout title="Velocity">
     <div class="flex flex-col gap-6">
-      <div
-        v-if="loadError"
-        class="rounded-2xl bg-error-container/70 text-on-error-container p-4 flex items-start justify-between gap-3"
-      >
-        <div class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
-          <p class="font-body text-sm">{{ loadError }}</p>
-        </div>
-        <AppButton size="sm" variant="danger" @click="loadProfileData">
-          Retry
-        </AppButton>
-      </div>
+      <PageLoadState
+        :error-text="loadError"
+        :is-loading="isLoading"
+        loading-text="Loading profile..."
+        @retry="loadProfileData"
+      />
 
-      <div v-else-if="isLoading" class="bg-surface-container-low rounded-3xl p-6 flex items-center gap-3">
-        <svg class="h-5 w-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-        </svg>
-        <p class="font-body text-sm text-on-surface-variant">Loading profile...</p>
-      </div>
-
-      <template v-else>
+      <template v-if="!loadError && !isLoading">
         <ProfileHeader
           :name="profileName"
           :role="role"

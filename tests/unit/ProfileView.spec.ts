@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { API_ORDER_STATUS } from '@/constants/order-status-codes'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
@@ -114,9 +115,9 @@ describe('ProfileView', () => {
     })
     mocks.getMyOrders.mockResolvedValue({
       data: [
-        { id: '1', status: 4 },
-        { id: '2', status: 1 },
-        { id: '3', status: 3 },
+        { id: '1', status: API_ORDER_STATUS.DELIVERED },
+        { id: '2', status: API_ORDER_STATUS.ASSIGNED },
+        { id: '3', status: API_ORDER_STATUS.IN_TRANSIT },
       ],
     })
   })

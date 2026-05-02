@@ -1,5 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { API_ORDER_STATUS } from '@/constants/order-status-codes'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
@@ -45,7 +46,7 @@ function makeOrder(overrides: Partial<OrderResponse>): OrderResponse {
   return {
     id: 'order-1',
     orderNumber: 'ORD-1',
-    status: 4,
+    status: API_ORDER_STATUS.DELIVERED,
     pickupAddress: { latitude: 0, longitude: 0 },
     deliveryAddress: { city: 'City', street: 'Street', buildingNumber: '1', latitude: 0, longitude: 0 },
     weight: 1,
@@ -82,10 +83,10 @@ describe('HistoryView', () => {
 
     mocks.getMyOrders.mockResolvedValue({
       data: [
-        makeOrder({ id: 'd1', status: 4, cost: 24.5, createdAt: '2026-04-24T14:00:00Z' }),
-        makeOrder({ id: 'c1', status: 5, cost: 12, createdAt: '2026-04-24T13:00:00Z', actualDeliveryTime: null }),
-        makeOrder({ id: 'r1', status: 6, cost: 15, createdAt: '2026-04-10T13:00:00Z', actualDeliveryTime: null }),
-        makeOrder({ id: 'a1', status: 1, cost: 99, createdAt: '2026-04-24T12:00:00Z', actualDeliveryTime: null }),
+        makeOrder({ id: 'd1', status: API_ORDER_STATUS.DELIVERED, cost: 24.5, createdAt: '2026-04-24T14:00:00Z' }),
+        makeOrder({ id: 'c1', status: API_ORDER_STATUS.CANCELLED, cost: 12, createdAt: '2026-04-24T13:00:00Z', actualDeliveryTime: null }),
+        makeOrder({ id: 'r1', status: API_ORDER_STATUS.FAILED, cost: 15, createdAt: '2026-04-10T13:00:00Z', actualDeliveryTime: null }),
+        makeOrder({ id: 'a1', status: API_ORDER_STATUS.ASSIGNED, cost: 99, createdAt: '2026-04-24T12:00:00Z', actualDeliveryTime: null }),
       ],
     })
   })
@@ -117,8 +118,8 @@ describe('HistoryView', () => {
   it('shows empty state when there are no completed deliveries', async () => {
     mocks.getMyOrders.mockResolvedValueOnce({
       data: [
-        makeOrder({ id: 'a2', status: 1 }),
-        makeOrder({ id: 'a3', status: 2 }),
+        makeOrder({ id: 'a2', status: API_ORDER_STATUS.ASSIGNED }),
+        makeOrder({ id: 'a3', status: API_ORDER_STATUS.PICKED_UP }),
       ],
     })
 
@@ -133,7 +134,7 @@ describe('HistoryView', () => {
     mocks.getMyOrders
       .mockRejectedValueOnce(new Error('network'))
       .mockResolvedValueOnce({
-        data: [makeOrder({ id: 'd2', status: 4, cost: 18, createdAt: '2026-04-24T15:00:00Z' })],
+        data: [makeOrder({ id: 'd2', status: API_ORDER_STATUS.DELIVERED, cost: 18, createdAt: '2026-04-24T15:00:00Z' })],
       })
 
     const wrapper = createWrapper()
