@@ -6,9 +6,12 @@ interface Props {
   recipientAddress: string
   instructions?: string
   recipientPhone?: string
+  actionLabel?: string
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  actionLabel: 'Confirm Delivery',
+})
 defineEmits<{ confirm: []; call: [] }>()
 </script>
 
@@ -43,6 +46,8 @@ defineEmits<{ confirm: []; call: [] }>()
         </div>
         <button
           class="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary shadow-cloud-sm shrink-0"
+          :disabled="!recipientPhone"
+          :class="!recipientPhone ? 'opacity-50 cursor-not-allowed' : ''"
           @click="$emit('call')"
         >
           <span class="material-symbols-outlined">call</span>
@@ -67,7 +72,7 @@ defineEmits<{ confirm: []; call: [] }>()
         class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary py-4 rounded-full font-headline font-bold text-lg shadow-primary-glow hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         @click="$emit('confirm')"
       >
-        Confirm Delivery
+        {{ actionLabel }}
         <span class="material-symbols-outlined">check_circle</span>
       </button>
     </div>

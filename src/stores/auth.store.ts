@@ -87,8 +87,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data } = await couriersApi.getMe()
       profile.value = data
+      return data
     } catch {
-      // ignore
+      return null
     }
   }
 

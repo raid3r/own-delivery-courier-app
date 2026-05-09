@@ -6,7 +6,7 @@ export interface FilterChip {
 }
 
 interface Props {
-  chips: FilterChip[]
+  chips: readonly FilterChip[]
   active?: string
 }
 

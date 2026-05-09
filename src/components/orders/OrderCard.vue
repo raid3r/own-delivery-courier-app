@@ -7,12 +7,13 @@ export interface OrderStop {
 
 export interface AvailableOrder {
   id: string
-  type: 'Express' | 'Standard' | 'Priority'
+  type: string
   payout: number
   payoutCents?: number
   estimatedMinutes: number
   distanceMiles: number
   mapImageUrl?: string
+  actionLabel?: string
   stops: OrderStop[]
 }
 
@@ -91,7 +92,7 @@ defineEmits<{ accept: [id: string] }>()
       class="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold text-sm py-4 rounded-full shadow-primary-glow-sm hover:opacity-90 transition-opacity mt-2"
       @click="$emit('accept', order.id)"
     >
-      Accept Order
+      {{ order.actionLabel ?? 'Open Details' }}
     </button>
   </article>
 </template>

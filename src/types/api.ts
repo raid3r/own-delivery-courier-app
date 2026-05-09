@@ -130,6 +130,14 @@ export interface OrderResponse {
   specialInstructions: string | null
 }
 
+export interface PagedResponse<T> {
+  items: T[]
+  total: number
+  skip: number
+  take: number
+  hasMore: boolean
+}
+
 export interface OrderStatusUpdateRequest {
   newStatus: OrderStatus
   reason?: string | null
@@ -182,4 +190,3 @@ export interface UpdateTariffRequest {
   description?: string | null
   isActive?: boolean | null
 }
-

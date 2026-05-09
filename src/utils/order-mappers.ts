@@ -1,10 +1,14 @@
 import { API_ORDER_STATUS } from '@/constants/order-status-codes'
 import { formatRelativeDateLabel, formatTime24, getSafeTimestamp } from '@/utils/date'
+import { calculateDistanceKm, kilometersToMiles, roundToSingleDecimal } from '@/utils/geo'
 import { splitAmount } from '@/utils/money'
+import type { AvailableOrder } from '@/components/orders/OrderCard.vue'
 import {
   formatAddressDetails,
+  formatFullAddress,
   formatAddressLine,
   formatOrderDeliveryAddress,
+  getOrderStatusLabel,
   mapHistoryStatus,
   mapRouteStatus,
 } from '@/utils/order-formatters'
@@ -32,6 +36,21 @@ export interface HistoryItemViewModel {
   payoutCents?: number
   status: 'delivered' | 'cancelled' | 'returned'
   durationMinutes?: number
+}
+
+function estimateMinutesFromDistance(distanceMiles: number): number {
+  return Math.max(10, Math.round(distanceMiles * 12))
+}
+
+function getRouteDistanceMiles(order: OrderResponse): number {
+  const distanceKm = calculateDistanceKm(
+    order.pickupAddress.latitude,
+    order.pickupAddress.longitude,
+    order.deliveryAddress.latitude,
+    order.deliveryAddress.longitude,
+  )
+
+  return roundToSingleDecimal(kilometersToMiles(distanceKm))
 }
 
 function mapDurationMinutes(order: OrderResponse): number | undefined {
@@ -77,3 +96,29 @@ export function mapOrderToHistoryItem(order: OrderResponse): HistoryItemViewMode
   }
 }
 
+export function mapOrderToAvailableOrder(order: OrderResponse): AvailableOrder {
+  const payout = splitAmount(Number(order.cost || 0))
+  const distanceMiles = getRouteDistanceMiles(order)
+
+  return {
+    id: order.id,
+    type: getOrderStatusLabel(order.status),
+    payout: payout.amount,
+    payoutCents: payout.cents > 0 ? payout.cents : undefined,
+    estimatedMinutes: estimateMinutesFromDistance(distanceMiles),
+    distanceMiles,
+    actionLabel: 'Accept Order',
+    stops: [
+      {
+        type: 'pickup',
+        name: formatAddressLine(order.pickupAddress),
+        address: formatAddressDetails(order.pickupAddress) ?? formatFullAddress(order.pickupAddress),
+      },
+      {
+        type: 'dropoff',
+        name: formatAddressLine(order.deliveryAddress),
+        address: formatAddressDetails(order.deliveryAddress) ?? formatFullAddress(order.deliveryAddress),
+      },
+    ],
+  }
+}
