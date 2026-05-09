@@ -48,8 +48,18 @@ import ActiveOrderView from '@/views/orders/ActiveOrderView.vue'
 const MapSectionStub = {
   name: 'MapSection',
   props: ['order', 'status'],
-  emits: ['back'],
   template: '<div data-test="map-status">{{ status }}</div>',
+}
+
+const AppHeaderStub = {
+  name: 'AppHeader',
+  props: ['title'],
+  template: `
+    <div data-test="app-header">
+      <div data-test="app-header-title">{{ title }}</div>
+      <slot name="actions" />
+    </div>
+  `,
 }
 
 const DeliveryDetailsStub = {
@@ -79,6 +89,31 @@ const PageLoadStateStub = {
   `,
 }
 
+const BottomNavBarStub = {
+  name: 'BottomNavBar',
+  template: '<div data-test="bottom-nav" />',
+}
+
+const AppDialogStub = {
+  name: 'AppDialog',
+  props: ['isOpen', 'title', 'message', 'actions'],
+  emits: ['action', 'close'],
+  template: `
+    <div v-if="isOpen" data-test="app-dialog">
+      <div data-test="dialog-title">{{ title }}</div>
+      <div v-if="message" data-test="dialog-message">{{ message }}</div>
+      <button
+        v-for="action in actions"
+        :key="action.id"
+        :data-test="'dialog-action-' + action.id"
+        @click="$emit('action', action.id)"
+      >
+        {{ action.label }}
+      </button>
+    </div>
+  `,
+}
+
 function makeOrder(overrides: Partial<OrderResponse>): OrderResponse {
   return {
     id: 'order-1',
@@ -103,8 +138,11 @@ function createWrapper() {
     global: {
       stubs: {
         MapSection: MapSectionStub,
+        AppHeader: AppHeaderStub,
         DeliveryDetails: DeliveryDetailsStub,
         PageLoadState: PageLoadStateStub,
+        AppDialog: AppDialogStub,
+        BottomNavBar: BottomNavBarStub,
       },
     },
   })
@@ -150,9 +188,20 @@ describe('ActiveOrderView', () => {
     await flushPromises()
 
     expect(mocks.getById).toHaveBeenCalledWith('order-1')
+    expect(wrapper.get('[data-test="app-header-title"]').text()).toBe('ORD-1')
     expect(wrapper.get('[data-test="map-status"]').text()).toBe('In Transit')
     expect(wrapper.get('[data-test="delivery-tracking"]').text()).toBe('ORD-1')
     expect(wrapper.get('[data-test="delivery-recipient"]').text()).toBe('John Smith')
+    expect(wrapper.find('[data-test="bottom-nav"]').exists()).toBe(true)
+  })
+
+  it('navigates back from header button', async () => {
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    await wrapper.get('[data-test="header-back"]').trigger('click')
+
+    expect(mocks.back).toHaveBeenCalledTimes(1)
   })
 
   it('updates status through API and redirects to order details when flow completes', async () => {
@@ -162,7 +211,19 @@ describe('ActiveOrderView', () => {
     await wrapper.get('[data-test="confirm"]').trigger('click')
     await flushPromises()
 
+    expect(mocks.updateStatus).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-test="dialog-title"]').text()).toBe('Підтвердити доставку замовлення?')
+
+    await wrapper.get('[data-test="dialog-action-confirm"]').trigger('click')
+    await flushPromises()
+
     expect(mocks.updateStatus).toHaveBeenCalledWith('order-1', { newStatus: API_ORDER_STATUS.DELIVERED })
+    expect(wrapper.get('[data-test="dialog-title"]').text()).toBe('Доставку підтверджено')
+    expect(mocks.push).not.toHaveBeenCalled()
+
+    await wrapper.get('[data-test="dialog-action-ok"]').trigger('click')
+    await flushPromises()
+
     expect(mocks.push).toHaveBeenCalledWith('/orders/order-1')
   })
 

@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { API_ORDER_STATUS } from '@/constants/order-status-codes'
@@ -6,6 +7,13 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   getAvailable: vi.fn(),
   acceptOrder: vi.fn(),
+  loadMyOrders: vi.fn(),
+}))
+
+const myOrdersState = vi.hoisted(() => ({
+  orders: [] as any[],
+  isLoading: false,
+  loadError: null as string | null,
 }))
 
 vi.mock('vue-router', async () => {
@@ -21,6 +29,15 @@ vi.mock('@/api/endpoints/orders.api', () => ({
     getAvailable: mocks.getAvailable,
     acceptOrder: mocks.acceptOrder,
   },
+}))
+
+vi.mock('@/composables/useMyOrders', () => ({
+  useMyOrders: () => ({
+    orders: ref(myOrdersState.orders),
+    isLoading: ref(myOrdersState.isLoading),
+    loadError: ref(myOrdersState.loadError),
+    loadMyOrders: mocks.loadMyOrders,
+  }),
 }))
 
 import type { OrderResponse } from '@/types/api'
@@ -69,6 +86,26 @@ const PageLoadStateStub = {
   `,
 }
 
+const AppDialogStub = {
+  name: 'AppDialog',
+  props: ['isOpen', 'title', 'message', 'actions'],
+  emits: ['action', 'close'],
+  template: `
+    <div v-if="isOpen" data-test="app-dialog">
+      <div data-test="dialog-title">{{ title }}</div>
+      <div v-if="message" data-test="dialog-message">{{ message }}</div>
+      <button
+        v-for="action in actions"
+        :key="action.id"
+        :data-test="'dialog-action-' + action.id"
+        @click="$emit('action', action.id)"
+      >
+        {{ action.label }}
+      </button>
+    </div>
+  `,
+}
+
 function makeOrder(overrides: Partial<OrderResponse>): OrderResponse {
   return {
     id: 'order-1',
@@ -96,6 +133,7 @@ function createWrapper() {
         FilterChips: FilterChipsStub,
         OrderCard: OrderCardStub,
         PageLoadState: PageLoadStateStub,
+        AppDialog: AppDialogStub,
       },
     },
   })
@@ -106,6 +144,11 @@ describe('OrdersListView', () => {
     mocks.push.mockReset()
     mocks.getAvailable.mockReset()
     mocks.acceptOrder.mockReset()
+    mocks.loadMyOrders.mockReset()
+
+    myOrdersState.orders = []
+    myOrdersState.isLoading = false
+    myOrdersState.loadError = null
 
     mocks.getAvailable.mockResolvedValue({
       data: {
@@ -123,6 +166,8 @@ describe('OrdersListView', () => {
     mocks.acceptOrder.mockResolvedValue({
       data: makeOrder({ id: 'short-distance', status: API_ORDER_STATUS.ASSIGNED }),
     })
+
+    mocks.loadMyOrders.mockResolvedValue([])
   })
 
   it('loads available orders from API and renders them', async () => {
@@ -130,7 +175,7 @@ describe('OrdersListView', () => {
     await flushPromises()
 
     expect(mocks.getAvailable).toHaveBeenCalledWith({ skip: 0, take: 20 })
-    expect(wrapper.text()).toContain('Showing 2 of 2 nearby deliveries')
+    expect(wrapper.text()).toContain('Показано 2 з 2 найближчих доставок')
     expect(wrapper.findAll('[data-test^="order-"]')).toHaveLength(2)
   })
 
@@ -190,7 +235,7 @@ describe('OrdersListView', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    expect(wrapper.text()).toContain('No available orders right now.')
+    expect(wrapper.text()).toContain('Наразі немає доступних замовлень.')
   })
 
   it('shows error and retries loading', async () => {
@@ -225,7 +270,19 @@ describe('OrdersListView', () => {
     await wrapper.get('[data-test="order-short-distance"]').trigger('click')
     await flushPromises()
 
+    expect(mocks.acceptOrder).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-test="dialog-title"]').text()).toContain('Підтвердити прийняття замовлення?')
+
+    await wrapper.get('[data-test="dialog-action-confirm"]').trigger('click')
+    await flushPromises()
+
     expect(mocks.acceptOrder).toHaveBeenCalledWith('short-distance')
+    expect(wrapper.get('[data-test="dialog-title"]').text()).toContain('Замовлення успішно прийнято')
+    expect(mocks.push).not.toHaveBeenCalled()
+
+    await wrapper.get('[data-test="dialog-action-ok"]').trigger('click')
+    await flushPromises()
+
     expect(mocks.push).toHaveBeenCalledWith('/orders/active?id=short-distance')
   })
 
@@ -238,7 +295,60 @@ describe('OrdersListView', () => {
     await wrapper.get('[data-test="order-short-distance"]').trigger('click')
     await flushPromises()
 
+    await wrapper.get('[data-test="dialog-action-confirm"]').trigger('click')
+    await flushPromises()
+
     expect(wrapper.text()).toContain('Failed to accept order. It may have already been taken.')
     expect(mocks.push).not.toHaveBeenCalled()
+  })
+
+  it('shows status filters for my orders and filters list by selected status', async () => {
+    myOrdersState.orders = [
+      makeOrder({ id: 'assigned-order', status: API_ORDER_STATUS.ASSIGNED }),
+      makeOrder({ id: 'picked-up-order', status: API_ORDER_STATUS.PICKED_UP }),
+      makeOrder({ id: 'delivered-order', status: API_ORDER_STATUS.DELIVERED }),
+    ]
+
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    const myOrdersTab = wrapper.findAll('button').find((button) => button.text() === 'Мої замовлення')
+    expect(myOrdersTab).toBeTruthy()
+
+    await myOrdersTab!.trigger('click')
+    await flushPromises()
+
+    expect(mocks.loadMyOrders).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('[data-test="filter-all"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="filter-assigned"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="filter-delivered"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="order-assigned-order"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="order-picked-up-order"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="order-delivered-order"]').exists()).toBe(true)
+
+    await wrapper.get('[data-test="filter-delivered"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="order-assigned-order"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="order-picked-up-order"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="order-delivered-order"]').exists()).toBe(true)
+  })
+
+  it('shows filtered empty state for my orders when selected status has no matches', async () => {
+    myOrdersState.orders = [
+      makeOrder({ id: 'assigned-order', status: API_ORDER_STATUS.ASSIGNED }),
+    ]
+
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    const myOrdersTab = wrapper.findAll('button').find((button) => button.text() === 'Мої замовлення')
+    await myOrdersTab!.trigger('click')
+    await flushPromises()
+
+    await wrapper.get('[data-test="filter-delivered"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Немає замовлень з обраним статусом.')
   })
 })
