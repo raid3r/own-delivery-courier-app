@@ -6,7 +6,7 @@ import { API_ORDER_STATUS } from '@/constants/order-status-codes'
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   getMe: vi.fn(),
-  getMyOrders: vi.fn(),
+  getByCourier: vi.fn(),
   logout: vi.fn(),
 }))
 
@@ -35,7 +35,7 @@ vi.mock('@/api/endpoints/couriers.api', () => ({
 
 vi.mock('@/api/endpoints/orders.api', () => ({
   ordersApi: {
-    getMyOrders: mocks.getMyOrders,
+    getByCourier: mocks.getByCourier,
   },
 }))
 
@@ -93,7 +93,7 @@ describe('ProfileView', () => {
   beforeEach(() => {
     mocks.push.mockReset()
     mocks.getMe.mockReset()
-    mocks.getMyOrders.mockReset()
+    mocks.getByCourier.mockReset()
     mocks.logout.mockReset()
 
     mockAuthStore = reactive({
@@ -113,7 +113,7 @@ describe('ProfileView', () => {
         isActive: true,
       },
     })
-    mocks.getMyOrders.mockResolvedValue({
+    mocks.getByCourier.mockResolvedValue({
       data: [
         { id: '1', status: API_ORDER_STATUS.DELIVERED },
         { id: '2', status: API_ORDER_STATUS.ASSIGNED },
@@ -127,7 +127,8 @@ describe('ProfileView', () => {
     await flushPromises()
 
     expect(mocks.getMe).toHaveBeenCalledTimes(1)
-    expect(mocks.getMyOrders).toHaveBeenCalledTimes(1)
+    expect(mocks.getByCourier).toHaveBeenCalledTimes(1)
+    expect(mocks.getByCourier).toHaveBeenCalledWith('c1', { skip: 0, take: 100 })
     expect(wrapper.get('[data-test="header"]').text()).toContain('John Doe')
     expect(wrapper.get('[data-test="header"]').text()).toContain('Active Courier')
     expect(wrapper.get('[data-test="header"]').text()).toContain('|3')
@@ -140,7 +141,7 @@ describe('ProfileView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Failed to load profile data. Please try again.')
-    expect(mocks.getMyOrders).not.toHaveBeenCalled()
+    expect(mocks.getByCourier).not.toHaveBeenCalled()
   })
 
   it('retries loading after error', async () => {

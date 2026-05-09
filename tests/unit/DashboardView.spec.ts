@@ -5,7 +5,7 @@ import { API_ORDER_STATUS } from '@/constants/order-status-codes'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
-  getMyOrders: vi.fn(),
+  getByCourier: vi.fn(),
   logout: vi.fn(),
   fetchProfile: vi.fn(),
 }))
@@ -30,7 +30,7 @@ vi.mock('@/stores/auth.store', () => ({
 
 vi.mock('@/api/endpoints/orders.api', () => ({
   ordersApi: {
-    getMyOrders: mocks.getMyOrders,
+    getByCourier: mocks.getByCourier,
   },
 }))
 
@@ -109,7 +109,7 @@ describe('DashboardView', () => {
     vi.setSystemTime(new Date('2026-05-02T12:00:00Z'))
 
     mocks.push.mockReset()
-    mocks.getMyOrders.mockReset()
+    mocks.getByCourier.mockReset()
     mocks.logout.mockReset()
     mocks.fetchProfile.mockReset()
 
@@ -120,8 +120,19 @@ describe('DashboardView', () => {
     })
 
     mocks.logout.mockResolvedValue(undefined)
-    mocks.fetchProfile.mockResolvedValue(undefined)
-    mocks.getMyOrders.mockResolvedValue({
+    mocks.fetchProfile.mockImplementation(async () => {
+      mockAuthStore.profile = {
+        courierId: 'courier-1',
+        email: 'courier@example.com',
+        firstName: 'Alex',
+        lastName: 'Rider',
+        phoneNumber: null,
+        createdAt: '2026-05-01T12:00:00Z',
+        isActive: true,
+      }
+      return mockAuthStore.profile
+    })
+    mocks.getByCourier.mockResolvedValue({
       data: [
         makeOrder({ id: 'd1', status: API_ORDER_STATUS.DELIVERED, cost: 184.5, createdAt: '2026-05-02T08:00:00Z', actualDeliveryTime: '2026-05-02T09:00:00Z' }),
         makeOrder({ id: 'd2', status: API_ORDER_STATUS.DELIVERED, cost: 20.25, createdAt: '2026-04-30T08:00:00Z', actualDeliveryTime: '2026-04-30T09:00:00Z' }),
@@ -142,7 +153,8 @@ describe('DashboardView', () => {
     await flushPromises()
 
     expect(mocks.fetchProfile).toHaveBeenCalledTimes(1)
-    expect(mocks.getMyOrders).toHaveBeenCalledTimes(1)
+    expect(mocks.getByCourier).toHaveBeenCalledTimes(1)
+    expect(mocks.getByCourier).toHaveBeenCalledWith('courier-1', { skip: 0, take: 100 })
     expect(wrapper.get('[data-test="earnings-amount"]').text()).toBe('184')
     expect(wrapper.get('[data-test="earnings-cents"]').text()).toBe('50')
     expect(wrapper.get('[data-test="earnings-goal"]').text()).toBe('250')
@@ -153,7 +165,7 @@ describe('DashboardView', () => {
   })
 
   it('shows error when dashboard request fails', async () => {
-    mocks.getMyOrders.mockRejectedValueOnce(new Error('network'))
+    mocks.getByCourier.mockRejectedValueOnce(new Error('network'))
 
     const wrapper = createWrapper()
     await flushPromises()
@@ -162,7 +174,7 @@ describe('DashboardView', () => {
   })
 
   it('retries loading after error', async () => {
-    mocks.getMyOrders
+    mocks.getByCourier
       .mockRejectedValueOnce(new Error('network'))
       .mockResolvedValueOnce({
         data: [makeOrder({ id: 'a4', status: API_ORDER_STATUS.IN_TRANSIT, orderNumber: 'TRN-44' })],
@@ -174,7 +186,7 @@ describe('DashboardView', () => {
     await wrapper.get('[data-test="retry"]').trigger('click')
     await flushPromises()
 
-    expect(mocks.getMyOrders).toHaveBeenCalledTimes(2)
+    expect(mocks.getByCourier).toHaveBeenCalledTimes(2)
     expect(wrapper.findAll('[data-test^="route-"]')).toHaveLength(1)
   })
 
