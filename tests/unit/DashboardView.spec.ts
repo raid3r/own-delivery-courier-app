@@ -133,14 +133,20 @@ describe('DashboardView', () => {
       return mockAuthStore.profile
     })
     mocks.getByCourier.mockResolvedValue({
-      data: [
-        makeOrder({ id: 'd1', status: API_ORDER_STATUS.DELIVERED, cost: 184.5, createdAt: '2026-05-02T08:00:00Z', actualDeliveryTime: '2026-05-02T09:00:00Z' }),
-        makeOrder({ id: 'd2', status: API_ORDER_STATUS.DELIVERED, cost: 20.25, createdAt: '2026-04-30T08:00:00Z', actualDeliveryTime: '2026-04-30T09:00:00Z' }),
-        makeOrder({ id: 'd3', status: API_ORDER_STATUS.DELIVERED, cost: 11, createdAt: '2026-04-20T08:00:00Z', actualDeliveryTime: '2026-04-20T09:00:00Z' }),
-        makeOrder({ id: 'a1', status: API_ORDER_STATUS.ASSIGNED, orderNumber: 'PKP-11', actualDeliveryTime: null }),
-        makeOrder({ id: 'a2', status: API_ORDER_STATUS.PICKED_UP, orderNumber: 'PKD-22', actualDeliveryTime: null }),
-        makeOrder({ id: 'a3', status: API_ORDER_STATUS.IN_TRANSIT, orderNumber: 'TRN-33', actualDeliveryTime: null }),
-      ],
+      data: {
+        items: [
+          makeOrder({ id: 'd1', status: API_ORDER_STATUS.DELIVERED, cost: 184.5, createdAt: '2026-05-02T08:00:00Z', actualDeliveryTime: '2026-05-02T09:00:00Z' }),
+          makeOrder({ id: 'd2', status: API_ORDER_STATUS.DELIVERED, cost: 20.25, createdAt: '2026-04-30T08:00:00Z', actualDeliveryTime: '2026-04-30T09:00:00Z' }),
+          makeOrder({ id: 'd3', status: API_ORDER_STATUS.DELIVERED, cost: 11, createdAt: '2026-04-20T08:00:00Z', actualDeliveryTime: '2026-04-20T09:00:00Z' }),
+          makeOrder({ id: 'a1', status: API_ORDER_STATUS.ASSIGNED, orderNumber: 'PKP-11', actualDeliveryTime: null }),
+          makeOrder({ id: 'a2', status: API_ORDER_STATUS.PICKED_UP, orderNumber: 'PKD-22', actualDeliveryTime: null }),
+          makeOrder({ id: 'a3', status: API_ORDER_STATUS.IN_TRANSIT, orderNumber: 'TRN-33', actualDeliveryTime: null }),
+        ],
+        total: 6,
+        skip: 0,
+        take: 100,
+        hasMore: false,
+      },
     })
   })
 

@@ -40,7 +40,7 @@ export function useMyOrders() {
         take: pageSize,
       })
 
-      const batch = response.data ?? []
+      const batch = response.data.items ?? []
       allOrders.push(...batch)
 
       if (batch.length < pageSize) {

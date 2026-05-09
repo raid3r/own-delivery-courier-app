@@ -134,7 +134,15 @@ describe('ActiveOrderView', () => {
     mocks.updateStatus.mockResolvedValue({
       data: makeOrder({ status: API_ORDER_STATUS.DELIVERED }),
     })
-    mocks.getByCourier.mockResolvedValue({ data: [] })
+    mocks.getByCourier.mockResolvedValue({
+      data: {
+        items: [],
+        total: 0,
+        skip: 0,
+        take: 100,
+        hasMore: false,
+      },
+    })
   })
 
   it('loads active order by query id and renders real API data', async () => {
@@ -161,7 +169,13 @@ describe('ActiveOrderView', () => {
   it('shows empty state when there is no active order', async () => {
     routeState.query.id = undefined
     mocks.getByCourier.mockResolvedValueOnce({
-      data: [makeOrder({ id: 'done', status: API_ORDER_STATUS.DELIVERED })],
+      data: {
+        items: [makeOrder({ id: 'done', status: API_ORDER_STATUS.DELIVERED })],
+        total: 1,
+        skip: 0,
+        take: 100,
+        hasMore: false,
+      },
     })
 
     const wrapper = createWrapper()

@@ -111,12 +111,18 @@ describe('HistoryView', () => {
     })
 
     mocks.getByCourier.mockResolvedValue({
-      data: [
-        makeOrder({ id: 'd1', status: API_ORDER_STATUS.DELIVERED, cost: 24.5, createdAt: '2026-04-24T14:00:00Z' }),
-        makeOrder({ id: 'c1', status: API_ORDER_STATUS.CANCELLED, cost: 12, createdAt: '2026-04-24T13:00:00Z', actualDeliveryTime: null }),
-        makeOrder({ id: 'r1', status: API_ORDER_STATUS.FAILED, cost: 15, createdAt: '2026-04-10T13:00:00Z', actualDeliveryTime: null }),
-        makeOrder({ id: 'a1', status: API_ORDER_STATUS.ASSIGNED, cost: 99, createdAt: '2026-04-24T12:00:00Z', actualDeliveryTime: null }),
-      ],
+      data: {
+        items: [
+          makeOrder({ id: 'd1', status: API_ORDER_STATUS.DELIVERED, cost: 24.5, createdAt: '2026-04-24T14:00:00Z' }),
+          makeOrder({ id: 'c1', status: API_ORDER_STATUS.CANCELLED, cost: 12, createdAt: '2026-04-24T13:00:00Z', actualDeliveryTime: null }),
+          makeOrder({ id: 'r1', status: API_ORDER_STATUS.FAILED, cost: 15, createdAt: '2026-04-10T13:00:00Z', actualDeliveryTime: null }),
+          makeOrder({ id: 'a1', status: API_ORDER_STATUS.ASSIGNED, cost: 99, createdAt: '2026-04-24T12:00:00Z', actualDeliveryTime: null }),
+        ],
+        total: 4,
+        skip: 0,
+        take: 100,
+        hasMore: false,
+      },
     })
   })
 

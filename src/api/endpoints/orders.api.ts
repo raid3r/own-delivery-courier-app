@@ -44,7 +44,7 @@ export const ordersApi = {
     apiClient.post(`/api/v1/orders/${id}/accept`),
 
   /** GET /api/v1/orders/courier/:courierId — Замовлення конкретного кур'єра */
-  getByCourier: (courierId: string, params?: OrdersQueryParams): Promise<AxiosResponse<OrderResponse[]>> =>
+  getByCourier: (courierId: string, params?: OrdersQueryParams): Promise<AxiosResponse<PagedResponse<OrderResponse>>> =>
     apiClient.get(`/api/v1/orders/courier/${courierId}`, { params }),
 
   /** PUT /api/v1/orders/:id/status — Оновити статус замовлення */
