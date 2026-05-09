@@ -100,6 +100,7 @@ watch(requestedOrderId, () => {
   <div class="bg-surface min-h-dvh flex flex-col overflow-hidden">
     <template v-if="order && !isLoading && !loadError">
       <MapSection
+        :order="order"
         :status="statusLabel"
         @back="router.back()"
       />

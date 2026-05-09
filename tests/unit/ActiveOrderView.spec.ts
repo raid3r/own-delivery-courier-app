@@ -47,7 +47,7 @@ import ActiveOrderView from '@/views/orders/ActiveOrderView.vue'
 
 const MapSectionStub = {
   name: 'MapSection',
-  props: ['status'],
+  props: ['order', 'status'],
   emits: ['back'],
   template: '<div data-test="map-status">{{ status }}</div>',
 }
