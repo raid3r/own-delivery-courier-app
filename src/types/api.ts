@@ -23,6 +23,8 @@ export interface LocationDto {
   latitude: number
   longitude: number
   accuracy?: number | null
+  altitude?: number | null
+  speed?: number | null
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -53,6 +55,7 @@ export interface LoginCourierRequest {
 }
 
 export interface AuthResponse {
+  userId: string
   courierId: string
   email: string | null
   firstName: string | null

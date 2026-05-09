@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import LocationSyncIndicator from './LocationSyncIndicator.vue'
+
 interface Props {
   avatarUrl?: string
   title?: string
@@ -7,7 +9,7 @@ interface Props {
   transparent?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: 'Velocity',
   showNotification: true,
   transparent: false,
@@ -34,6 +36,7 @@ const emit = defineEmits<{ notificationClick: [] }>()
     </div>
 
     <div class="flex items-center gap-2">
+      <LocationSyncIndicator />
       <slot name="actions" />
       <button
         v-if="showNotification"
@@ -49,4 +52,3 @@ const emit = defineEmits<{ notificationClick: [] }>()
     </div>
   </header>
 </template>
-

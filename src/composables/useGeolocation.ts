@@ -15,25 +15,29 @@ export function useGeolocation() {
 
   async function syncPosition(position: GeolocationPosition) {
     const now = Date.now()
-    const { latitude, longitude, accuracy } = position.coords
+    const { latitude, longitude, accuracy, altitude, speed } = position.coords
 
     locationStore.current = {
       lat: latitude,
       lng: longitude,
     }
 
+    // Successful position callback means browser geolocation is working again.
+    locationStore.error = null
+
     if (isSending.value || now - lastSentAt < LOCATION_SYNC_INTERVAL_MS) {
       return
     }
 
     isSending.value = true
-    locationStore.error = null
 
     try {
       await locationApi.updateLocation({
         latitude,
         longitude,
         accuracy: Number.isFinite(accuracy) ? accuracy : null,
+        altitude: Number.isFinite(altitude) ? (altitude as number) : null,
+        speed: Number.isFinite(speed) ? (speed as number) : null,
       })
       lastSentAt = now
       locationStore.lastSyncedAt = new Date(now).toISOString()
